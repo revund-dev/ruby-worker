@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# revund-ruby-worker — entrypoint installed by RubyGems.
+#
+# Reads PORT from REVUND_RUBY_WORKER_PORT (default 50053).
+#
+# Prints "ready: 0.0.0.0:<port>" on stdout once the gRPC
+# server has bound — the Revund CLI greps for that line
+# to know when to start sending RPCs.
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+require 'ruby_worker/server'
+
+port = (ENV['REVUND_RUBY_WORKER_PORT'] || '50053').to_i
+RubyWorker::Server.new(port).run

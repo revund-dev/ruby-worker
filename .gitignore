@@ -1,0 +1,7 @@
+vendor/
+pkg/
+*.gem
+*.tar.gz
+Gemfile.lock
+proto/
+.DS_Store
