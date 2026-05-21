@@ -51,9 +51,9 @@ The worker advertises one capability via the `Describe` RPC:
 ## Contract
 
 The wire contract is defined in
-[`proto/worker/v1/worker.proto`](./proto/worker/v1/worker.proto), vendored
-inside the gem. The canonical source lives at
-[`revund-dev/revund-workers/proto/worker/v1/worker.proto`](https://github.com/revund-dev/revund-workers/blob/main/proto/worker/v1/worker.proto).
+[`proto/worker/v1/worker.proto`](./proto/worker/v1/worker.proto),
+vendored inside the gem and loaded by the generated
+`worker_pb` / `worker_services_pb` stubs.
 
 ## License
 
