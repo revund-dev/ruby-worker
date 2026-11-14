@@ -127,8 +127,44 @@ module RubyWorker
       # Run a command, capture stderr, raise sanitized error on
       # non-zero exit. The raised message NEVER contains an
       # authenticated URL.
+      # Hardened git (REV-17): the checkout is attacker-controlled, so
+      # hooks, fsmonitor and host config (filter/diff drivers) are off,
+      # and git gets an allow-listed env (unsetenv_others) instead of ours.
+      GIT_CONFIG = %w[
+        core.hooksPath=/dev/null
+        core.fsmonitor=false
+        core.untrackedCache=false
+        core.sshCommand=ssh
+        core.pager=cat
+        submodule.recurse=false
+        protocol.ext.allow=never
+        uploadpack.packObjectsHook=
+        credential.helper=
+      ].freeze
+
+      ENV_ALLOW = %w[
+        PATH HOME USER LOGNAME TMPDIR TMP TEMP LANG LC_ALL LC_CTYPE LC_MESSAGES TZ
+        HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
+        SSL_CERT_FILE SSL_CERT_DIR SYSTEMROOT COMSPEC PATHEXT WINDIR
+      ].freeze
+
+      def hardened_git_args
+        GIT_CONFIG.flat_map { |c| ['-c', c] }
+      end
+
+      def git_env
+        ENV.to_h.slice(*ENV_ALLOW).merge(
+          'GIT_CONFIG_NOSYSTEM' => '1',
+          'GIT_CONFIG_GLOBAL' => '/dev/null',
+          'GIT_TERMINAL_PROMPT' => '0',
+          'GIT_PAGER' => 'cat',
+          'GIT_LFS_SKIP_SMUDGE' => '1'
+        )
+      end
+
       def run(*cmd)
-        _stdout, stderr, status = Open3.capture3(*cmd)
+        bin, *args = cmd
+        _stdout, stderr, status = Open3.capture3(git_env, bin, *hardened_git_args, *args, unsetenv_others: true)
         return if status.success?
 
         sanitized = cmd.map { |a| looks_authenticated?(a) ? redact(a) : a }
